@@ -20,12 +20,23 @@ def create_news_app():
     st.title("📰 Financial News Dashboard")
     st.markdown("Stay updated with the latest news in Finance, Crypto, Stocks, and ESG")
 
-    # Get API key from environment variable or secrets
-    api_key = os.getenv('NEWS_API_KEY') or st.secrets["NEWS_API_KEY"]
-    
-    if not api_key:
-        st.error("NEWS_API_KEY not found in environment variables or secrets")
-        return
+    # Try to get API key from different sources
+    try:
+        api_key = st.secrets["53cd7e60682a4701a02c04d72a5e9e55"]
+    except:
+        api_key = st.text_input("Enter your News API key", type="password")
+        if not api_key:
+            st.warning("Please enter your News API key. You can get one from https://newsapi.org/")
+            st.info("To deploy permanently, add your API key to Streamlit secrets using the following steps:\n\n" +
+                   "1. Go to your Streamlit Cloud dashboard\n" +
+                   "2. Select your app\n" +
+                   "3. Click on 'Settings' ⚙️\n" +
+                   "4. Click on 'Secrets'\n" +
+                   "5. Add your secret in this format:\n" +
+                   "```\n" +
+                   "NEWS_API_KEY = 'your-api-key-here'\n" +
+                   "```")
+            return
 
     # Sidebar filters
     st.sidebar.header("Filters")
@@ -52,7 +63,7 @@ def create_news_app():
     }
 
     @st.cache_data(ttl=3600)  # Cache data for 1 hour
-    def fetch_news(query, days, count):
+    def fetch_news(query, days, count, api_key):
         # Calculate date range
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
@@ -86,7 +97,7 @@ def create_news_app():
     with st.spinner('Fetching latest news...'):
         # Fetch news based on selected category
         query = search_queries[category]
-        news_data = fetch_news(query, days_ago, article_count)
+        news_data = fetch_news(query, days_ago, article_count, api_key)
 
     if news_data and news_data.get('status') == 'ok':
         articles = news_data['articles']
